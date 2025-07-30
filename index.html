@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة تحكم المتجر - تجريبية</title>
+  <style>
+    body { font-family: 'Tajawal', Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+    h1 { text-align: center; }
+    form { background: #fff; padding: 20px; border-radius: 10px; margin-bottom: 30px; }
+    input, textarea { width: 100%; padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; }
+    button { padding: 10px 15px; background: #28a745; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #218838; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; }
+    table th, table td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    table th { background: #007bff; color: #fff; }
+    .delete-btn { background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; }
+    .delete-btn:hover { background: #c82333; }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD-2XyDdRd96bMke...",
+      authDomain: "waeilstore-88caa.firebaseapp.com",
+      projectId: "waeilstore-88caa",
+      storageBucket: "waeilstore-88caa.appspot.com",
+      messagingSenderId: "688257524364",
+      appId: "1:688257524364:web:f52aad..."
+    };
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+</head>
+<body>
+  <h1>لوحة تحكم المنتجات - تجريبية</h1>
+  
+  <form id="addProductForm">
+    <h3>إضافة منتج جديد</h3>
+    <input type="text" id="name" placeholder="اسم المنتج" required>
+    <input type="number" id="price" placeholder="السعر" required>
+    <textarea id="description" placeholder="الوصف"></textarea>
+    <input type="text" id="image" placeholder="رابط الصورة" required>
+    <button type="submit">إضافة المنتج</button>
+  </form>
+
+  <h3>قائمة المنتجات</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>الصورة</th>
+        <th>الاسم</th>
+        <th>السعر</th>
+        <th>الوصف</th>
+        <th>حذف</th>
+      </tr>
+    </thead>
+    <tbody id="productsTable"></tbody>
+  </table>
+
+  <script>
+    const form = document.getElementById('addProductForm');
+    const tableBody = document.getElementById('productsTable');
+
+    // عرض المنتجات الحالية
+    function loadProducts() {
+      tableBody.innerHTML = '';
+      db.collection('products').get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><img src="${data.image}" width="50"></td>
+            <td>${data.name}</td>
+            <td>${data.price}</td>
+            <td>${data.description || ''}</td>
+            <td><button class="delete-btn" onclick="deleteProduct('${doc.id}')">حذف</button></td>
+          `;
+          tableBody.appendChild(row);
+        });
+      });
+    }
+
+    loadProducts();
+
+    // إضافة منتج جديد
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const price = parseFloat(document.getElementById('price').value);
+      const description = document.getElementById('description').value;
+      const image = document.getElementById('image').value;
+
+      db.collection('products').add({ name, price, description, image })
+        .then(() => {
+          alert('تم إضافة المنتج بنجاح!');
+          form.reset();
+          loadProducts();
+        })
+        .catch(err => alert('حدث خطأ: ' + err.message));
+    });
+
+    // حذف منتج
+    function deleteProduct(id) {
+      if(confirm('هل أنت متأكد أنك تريد حذف هذا المنتج؟')) {
+        db.collection('products').doc(id).delete()
+          .then(() => {
+            alert('تم الحذف بنجاح');
+            loadProducts();
+          });
+      }
+    }
+  </script>
+</body>
+</html>
